@@ -1,0 +1,10 @@
+{
+  "name": "delete-call",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Lambda function to delete call data",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.470.0"
+  }
+}

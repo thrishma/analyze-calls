@@ -1,0 +1,15 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "call-analysis-dev"
+resolve_s3 = true
+s3_prefix = "call-analysis"
+region = "us-east-2"
+# Optional: specify AWS profile name if not using default
+# profile = "your-aws-profile"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=\"dev\""
+image_repositories = []
+
+[default.global.parameters]
+region = "us-east-2"

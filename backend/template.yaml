@@ -1,0 +1,164 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Customer Discovery Call Analysis Platform
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+    Description: Deployment stage
+
+  OpenAIAPIKey:
+    Type: String
+    NoEcho: true
+    Description: OpenAI API Key (stored in Parameter Store)
+
+Globals:
+  Function:
+    Timeout: 120
+    Runtime: nodejs20.x
+    MemorySize: 1024
+    Environment:
+      Variables:
+        STAGE: !Ref Stage
+        S3_BUCKET_NAME: !Ref DataBucket
+    Architectures:
+      - x86_64
+
+Resources:
+  # S3 Buckets
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub call-analysis-data-${Stage}-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE]
+            AllowedOrigins: ['*']
+            MaxAge: 3000
+
+  # API Gateway
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Stage
+      Cors:
+        AllowOrigin: "'*'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+
+  # Lambda Functions
+  ProcessCallFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub call-analysis-process-call-${Stage}
+      CodeUri: lambda/processCall/
+      Handler: index.handler
+      MemorySize: 1536
+      Timeout: 180
+      Environment:
+        Variables:
+          OPENAI_API_KEY: !Ref OpenAIAPIKey
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref DataBucket
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/call-analysis/*
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /calls
+            Method: post
+            RestApiId: !Ref ApiGateway
+
+  ChatbotQueryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub call-analysis-chatbot-query-${Stage}
+      CodeUri: lambda/chatbotQuery/
+      Handler: index.handler
+      MemorySize: 512
+      Timeout: 60
+      Environment:
+        Variables:
+          OPENAI_API_KEY: !Ref OpenAIAPIKey
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/call-analysis/*
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /chat/query
+            Method: post
+            RestApiId: !Ref ApiGateway
+
+  GetCallsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub call-analysis-get-calls-${Stage}
+      CodeUri: lambda/getCalls/
+      Handler: index.handler
+      MemorySize: 256
+      Timeout: 30
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
+      Events:
+        ListCalls:
+          Type: Api
+          Properties:
+            Path: /calls
+            Method: get
+            RestApiId: !Ref ApiGateway
+        GetCallDetail:
+          Type: Api
+          Properties:
+            Path: /calls/{callId}
+            Method: get
+            RestApiId: !Ref ApiGateway
+
+  DeleteCallFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub call-analysis-delete-call-${Stage}
+      CodeUri: lambda/deleteCall/
+      Handler: index.handler
+      MemorySize: 256
+      Timeout: 30
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref DataBucket
+      Events:
+        DeleteCall:
+          Type: Api
+          Properties:
+            Path: /calls/{callId}
+            Method: delete
+            RestApiId: !Ref ApiGateway
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+
+  DataBucketName:
+    Description: S3 bucket for call data
+    Value: !Ref DataBucket

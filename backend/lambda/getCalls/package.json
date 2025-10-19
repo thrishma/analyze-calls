@@ -1,0 +1,16 @@
+{
+  "name": "get-calls-handler",
+  "version": "1.0.0",
+  "description": "Lambda function to retrieve call data",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.668.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(afplay /System/Documents/Sounds/ping.aiff)",
+      "Bash(npm create vite@latest . -- --template react)",
+      "Bash(npm install)",
+      "Bash(npm install @chakra-ui/react @emotion/react @emotion/styled framer-motion axios react-router-dom react-dropzone)",
+      "Bash(afplay /System/Library/Sounds/Glass.aiff)",
+      "Bash(sam build)",
+      "Bash(open http://localhost:5173/)",
+      "Bash(npm uninstall @chakra-ui/react @emotion/react @emotion/styled framer-motion)",
+      "Bash(npm install @chakra-ui/react@^2.8.2 @emotion/react@^11.11.1 @emotion/styled@^11.11.0 framer-motion@^10.16.4)",
+      "Bash(npm install @chakra-ui/react@^2.8.2 @emotion/react@^11.11.1 @emotion/styled@^11.11.0 framer-motion@^10.16.4 --legacy-peer-deps)",
+      "Bash(npm run dev)",
+      "Bash(sam deploy --profile analyze-calls)",
+      "Bash(npm install @chakra-ui/icons)",
+      "Bash(npm install @chakra-ui/icons --legacy-peer-deps)",
+      "Bash(git add amplify.yml)",
+      "Bash(git commit -m \"Fix amplify.yml for monorepo configuration\n\n- Update amplify.yml to use applications key for monorepo support\n- Set appRoot to frontend directory\n- Configure build artifacts and cache paths correctly\")",
+      "Bash(git push)",
+      "Bash(cat .gitignore)",
+      "Bash(git add .gitignore frontend/package-lock.json)",
+      "Bash(git commit -m \"Add package-lock.json for reproducible builds\")",
+      "Bash(git commit -m \"Use npm install with legacy-peer-deps for Amplify build\n\n- Change from npm ci to npm install --legacy-peer-deps\n- Resolves peer dependency conflict with React 19 and framer-motion\")",
+      "Bash(git add frontend/index.html)",
+      "Bash(git commit -m \"Update browser tab title to ''Call Analyzer''\")",
+      "Bash(git checkout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

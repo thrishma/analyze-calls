@@ -1,0 +1,18 @@
+{
+  "name": "process-call-handler",
+  "version": "1.0.0",
+  "description": "Lambda function to process customer discovery calls",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.668.0",
+    "openai": "^4.67.3",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
