@@ -186,7 +186,7 @@ function Home() {
             <VStack spacing={6} py={12}>
               <Box fontSize="6xl">📞</Box>
               <VStack spacing={2}>
-                <Heading size="lg">Welcome to Call Analysis Platform</Heading>
+                <Heading size="lg">Welcome to Call Analyzer</Heading>
                 <Text color="gray.600" textAlign="center" maxW="md">
                   Get started by analyzing your first customer discovery call. Upload a transcript to extract insights, pain points, and feature requests automatically.
                 </Text>
