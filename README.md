@@ -2,7 +2,29 @@
 
 > **Self-hosted AI-powered platform** for analyzing customer discovery calls to extract pain points, feature requests, and objections. Built with React, AWS Lambda, and OpenAI GPT-4.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub issues](https://img.shields.io/github/issues/thrishma/analyze-calls)](https://github.com/thrishma/analyze-calls/issues)
+[![GitHub stars](https://img.shields.io/github/stars/thrishma/analyze-calls)](https://github.com/thrishma/analyze-calls/stargazers)
+
+**🚀 Quick Start:** [Installation Guide](#installation--setup) • **🤝 Contributing:** [Guidelines](./CONTRIBUTING.md) • **📖 Docs:** [Technical Details](./CLAUDE.md)
+
 [Screenshots will be added here]
+
+## Why This Exists
+
+I got tired of manually analyzing customer discovery calls. Every time I needed to find a pattern or recall "that thing someone said about feature X," I'd waste hours digging through transcripts.
+
+There are plenty of tools that solve this—Gong, Chorus, etc.—but they're expensive. As a developer, I realized: **why pay for something I can build myself?**
+
+If you're tired of:
+- 📝 Manually combing through call transcripts
+- 🔍 Searching for "that one thing someone said about X"
+- 💸 Paying $100+/month for enterprise tools you barely use
+- ⏰ Wasting hours when you could be shipping
+
+...then this is for you. **Clone it. Deploy it. Own your data.** 🚀
+
+---
 
 ## What Does This Do?
 
@@ -51,12 +73,22 @@ Before you begin, ensure you have:
 
 ## Installation & Setup
 
-### Step 1: Clone the Repository
+### Step 1: Get the Code
 
+**For Users** (deploying to your own AWS account):
 ```bash
 git clone https://github.com/thrishma/analyze-calls.git
 cd analyze-calls
 ```
+
+**For Contributors** (making code changes):
+1. Fork this repository on GitHub (click "Fork" button)
+2. Clone your fork:
+```bash
+git clone https://github.com/YOUR-USERNAME/analyze-calls.git
+cd analyze-calls
+```
+3. See [CONTRIBUTING.md](./CONTRIBUTING.md) for development workflow
 
 ### Step 2: Backend Setup (AWS)
 
@@ -112,7 +144,28 @@ sam deploy --guided
 # - Save arguments to configuration file: Y
 ```
 
-**Important**: After deployment completes, note the **API Gateway URL** in the outputs (e.g., `https://xxxxxxxxxx.execute-api.us-east-2.amazonaws.com/dev`)
+**After deployment completes, you'll see the API Gateway URL:**
+
+```
+CloudFormation outputs from deployed stack
+--------------------------------------------------------------------------
+Outputs
+--------------------------------------------------------------------------
+Key                 ApiUrl
+Description         API Gateway endpoint URL
+Value               https://abc123xyz.execute-api.us-east-2.amazonaws.com/dev
+--------------------------------------------------------------------------
+```
+
+**📋 Copy this URL** - you'll need it in Step 3a below.
+
+**To retrieve it later:**
+```bash
+aws cloudformation describe-stacks \
+  --stack-name call-analysis-dev \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+  --output text
+```
 
 ### Step 3: Frontend Setup
 
@@ -152,16 +205,30 @@ Visit **http://localhost:5173** in your browser. You should see the dashboard!
 ## Architecture
 
 ```
-┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│   React     │─────▶│ API Gateway  │─────▶│   Lambda    │
-│  Frontend   │      │              │      │  Functions  │
-└─────────────┘      └──────────────┘      └─────────────┘
-                                                   │
-                                                   ▼
-                                            ┌─────────────┐
-                                            │     S3      │
-                                            │   Bucket    │
-                                            └─────────────┘
+┌─────────────┐                                    ┌──────────────┐
+│   React     │───── HTTPS ─────▶┌──────────────┐  │   OpenAI     │
+│  Frontend   │                  │ API Gateway  │  │   GPT-4 API  │
+│  (Vite)     │◀──── JSON ───────│   (REST)     │  │              │
+└─────────────┘                  └──────────────┘  └──────────────┘
+                                         │                 ▲
+                                         ▼                 │
+                                  ┌─────────────┐          │
+                                  │   Lambda    │──────────┘
+                                  │  Functions  │   API Calls
+                                  │             │
+                                  │ • Process   │
+                                  │ • GetCalls  │
+                                  │ • Chatbot   │
+                                  │ • Delete    │
+                                  └─────────────┘
+                                    │         │
+                        ┌───────────┘         └──────────┐
+                        ▼                                 ▼
+                 ┌─────────────┐                   ┌─────────────┐
+                 │     S3      │                   │  Parameter  │
+                 │   Bucket    │                   │    Store    │
+                 │ (Call Data) │                   │ (API Keys)  │
+                 └─────────────┘                   └─────────────┘
 ```
 
 **Tech Stack:**
@@ -173,10 +240,26 @@ Visit **http://localhost:5173** in your browser. You should see the dashboard!
 
 ### How It Works
 
-1. **Upload Flow**: User uploads transcript → API Gateway → ProcessCall Lambda → GPT-4 analysis → Store in S3
-2. **LinkedIn Extraction**: GPT-4 Vision analyzes screenshot → Extracts profile data
-3. **Chatbot**: Query → Generate embedding → Search chunks → GPT-4 synthesizes answer with sources
-4. **Retrieval**: GetCalls Lambda fetches data from S3 → Returns to frontend
+1. **Upload & Analysis**:
+   - User uploads transcript + LinkedIn info → API Gateway → ProcessCall Lambda
+   - Lambda retrieves OpenAI API key from Parameter Store
+   - Sends transcript to GPT-4 for analysis (pain points, features, objections)
+   - Stores results and chunks in S3 bucket
+
+2. **Call Retrieval**:
+   - GetCalls Lambda fetches metadata from S3
+   - Returns call list or detailed insights to frontend
+
+3. **Chatbot Queries**:
+   - User query → ChatbotQuery Lambda
+   - Generates embedding with OpenAI text-embedding-3-large
+   - Searches call chunks for semantic matches
+   - GPT-4 synthesizes answer with source citations
+
+4. **Data Flow**:
+   - All API calls go through API Gateway (CORS enabled)
+   - Lambda functions auto-scale based on demand
+   - S3 stores all call data (transcripts, metadata, chunks)
 
 ## Production Deployment
 
@@ -186,15 +269,38 @@ This project is structured as a **monorepo** (contains both `backend/` and `fron
 
 #### Step-by-Step Amplify Deployment
 
-**1. Deploy Backend First**
+**1. Deploy Backend First & Get API Gateway URL**
 
-Before deploying the frontend, ensure your backend is deployed to get the API Gateway URL:
+Before deploying the frontend, deploy your backend to get the API Gateway URL:
 
 ```bash
 cd backend
 sam build
 sam deploy --guided
-# Note the API Gateway URL from the outputs
+```
+
+After deployment completes, SAM will display outputs including your API Gateway URL:
+
+```
+CloudFormation outputs from deployed stack
+--------------------------------------------------------------------------
+Outputs
+--------------------------------------------------------------------------
+Key                 ApiUrl
+Description         API Gateway endpoint URL
+Value               https://abc123xyz.execute-api.us-east-2.amazonaws.com/dev
+--------------------------------------------------------------------------
+```
+
+**📋 Copy this URL** - you'll need it in step 5 below.
+
+**To retrieve it later:**
+```bash
+# If you need to find your API URL again:
+aws cloudformation describe-stacks \
+  --stack-name call-analysis-dev \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+  --output text
 ```
 
 **2. Push Code to Git Repository**
@@ -226,18 +332,28 @@ The `amplify.yml` file specifies:
 
 **5. Add Environment Variables**
 
+⚠️ **You need your API Gateway URL from Step 1** - if you didn't save it, scroll back to Step 1 to see how to retrieve it.
+
 In the Amplify Console, add the following environment variable:
 
 | Key | Value |
 |-----|-------|
-| `VITE_API_BASE_URL` | Your API Gateway URL from step 1 (e.g., `https://xxxxx.execute-api.us-east-2.amazonaws.com/dev`) |
+| `VITE_API_BASE_URL` | Your API Gateway URL from Step 1 (e.g., `https://abc123xyz.execute-api.us-east-2.amazonaws.com/dev`) |
 
-To add environment variables:
+**How to add environment variables in Amplify:**
 1. In Amplify Console → Select your app
 2. Go to **"App settings"** → **"Environment variables"**
 3. Click **"Manage variables"**
-4. Add `VITE_API_BASE_URL` with your API Gateway URL
-5. Click **"Save"**
+4. Click **"Add variable"**
+5. Enter key: `VITE_API_BASE_URL`
+6. Enter value: Paste your API Gateway URL from Step 1
+7. Click **"Save"**
+
+**Example:**
+```
+Key: VITE_API_BASE_URL
+Value: https://abc123xyz.execute-api.us-east-2.amazonaws.com/dev
+```
 
 **6. Review and Deploy**
 
@@ -246,13 +362,34 @@ To add environment variables:
 3. Wait for the build to complete (usually 2-5 minutes)
 4. Your app will be available at: `https://[app-id].amplifyapp.com`
 
-**7. Automatic Deployments**
+**7. (Optional) Set Up Password Protection**
+
+To protect your app with basic authentication (username/password):
+
+1. In Amplify Console → Select your app
+2. Go to **"App settings"** → **"Access control"**
+3. Click **"Manage access"**
+4. Select the branch you want to protect (e.g., `main`)
+5. Toggle **"Enable access control"** to ON
+6. Choose **"Restrict access with username and password"**
+7. Enter a username (e.g., `admin`)
+8. Enter a strong password
+9. Click **"Save"**
+
+Now when anyone visits your app, they'll need to enter the username and password. This is useful for:
+- Protecting internal tools from public access
+- Sharing with a small team without building full authentication
+- Testing in production before going public
+
+**Note:** This is basic HTTP authentication. For production apps with multiple users, consider implementing proper authentication with AWS Cognito or a third-party service.
+
+**8. Automatic Deployments**
 
 Amplify will automatically deploy on every git push to your main branch:
 - Push changes → Amplify detects changes → Builds → Deploys
 - View build logs in the Amplify Console
 
-#### Troubleshooting Amplify Deployment
+### Troubleshooting Amplify Deployment
 
 **Build fails with "npm ci" error:**
 - Solution: The `amplify.yml` uses `npm install --legacy-peer-deps` to handle React 19 peer dependencies
@@ -272,15 +409,76 @@ Amplify will automatically deploy on every git push to your main branch:
 - Verify your API Gateway URL is correct in Amplify environment variables
 - Ensure your backend Lambda functions return proper CORS headers (already configured in this template)
 
-### Option 2: Self-Hosted (Docker/VPS)
+---
 
-Build and serve the static frontend:
+<details>
+<summary><h3 style="display: inline;">Option 2: Self-Hosted (VPS/Docker/Other Platforms)</h3></summary>
+
+If you prefer to host the frontend yourself instead of using AWS Amplify:
+
+#### Build the Frontend
 
 ```bash
 cd frontend
 npm run build
-# Serve the 'dist' folder with nginx, Apache, or any static hosting
 ```
+
+This creates a `dist/` folder with optimized static files (HTML, CSS, JS).
+
+#### Deployment Options
+
+**Option A: nginx (Ubuntu/Debian VPS)**
+```bash
+# Copy built files to nginx web root
+sudo cp -r dist/* /var/www/html/
+
+# Configure nginx to handle React Router (optional but recommended)
+sudo nano /etc/nginx/sites-available/default
+# Add this inside the server block:
+# location / {
+#   try_files $uri $uri/ /index.html;
+# }
+
+sudo systemctl reload nginx
+```
+
+**Option B: Vercel**
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+cd frontend
+vercel --prod
+```
+
+**Option C: Netlify**
+```bash
+# Install Netlify CLI
+npm i -g netlify-cli
+
+# Deploy
+cd frontend
+netlify deploy --prod --dir=dist
+```
+
+**Option D: Docker**
+```dockerfile
+# Dockerfile
+FROM nginx:alpine
+COPY dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+```bash
+docker build -t call-analysis-frontend .
+docker run -p 80:80 call-analysis-frontend
+```
+
+**Important:** Don't forget to set the `VITE_API_BASE_URL` environment variable before building!
+
+</details>
 
 ### Backend Deployment
 
@@ -481,19 +679,5 @@ MIT License - see LICENSE file for details
 - **Questions**: Open a GitHub Discussion or Issue
 
 ---
-
-## Why I Built This
-
-I got tired of manually analyzing customer discovery calls. Every time I needed to find a pattern or recall "that thing someone said about feature X," I'd waste hours digging through transcripts.
-
-There are plenty of tools that solve this—Gong, Chorus, etc.—but they're expensive. As a developer, I realized: **why pay for something I can build myself?**
-
-If you're tired of:
-- 📝 Manually combing through call transcripts
-- 🔍 Searching for "that one thing someone said about X"
-- 💸 Paying for enterprise tools you barely use
-- ⏰ Wasting hours when you could be shipping
-
-...then this is for you. **Fork it. Use it. Own your data.** 🚀
 
 **Made with ❤️ (and a bit of frustration) for product teams who want to own their data.**
