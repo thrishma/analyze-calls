@@ -170,7 +170,7 @@ function Home() {
       <HStack justify="space-between" mb={6}>
         <Heading>Dashboard</Heading>
         <HStack>
-          <Button as={RouterLink} to="/upload" colorScheme="blue" size="lg">
+          <Button as={RouterLink} to="/upload" colorScheme="blue" size="lg" _hover={{ bg: 'blue.600', color: 'white' }}>
             Analyze New Call
           </Button>
           <Button as={RouterLink} to="/chatbot" variant="outline" colorScheme="blue" size="lg">
@@ -179,228 +179,250 @@ function Home() {
         </HStack>
       </HStack>
 
-      {/* Stats Cards */}
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6} mb={8}>
-        <Card>
-          <CardBody>
-            <VStack align="start" spacing={2}>
-              <Text fontSize="sm" color="gray.600">Total Calls</Text>
-              <Heading size="2xl">{stats.totalCalls}</Heading>
-              <Text fontSize="xs" color="gray.500">Analyzed</Text>
-            </VStack>
-          </CardBody>
-        </Card>
-
-        <Card
-          as={RouterLink}
-          to="/pain-points"
-          cursor="pointer"
-          transition="all 0.2s"
-          _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-        >
-          <CardBody>
-            <VStack align="start" spacing={2}>
-              <Text fontSize="sm" color="gray.600">Pain Points</Text>
-              <Heading size="2xl" color="red.500">{stats.totalPainPoints}</Heading>
-              <Text fontSize="xs" color="gray.500">Identified • Click to view</Text>
-            </VStack>
-          </CardBody>
-        </Card>
-
-        <Card
-          as={RouterLink}
-          to="/feature-requests"
-          cursor="pointer"
-          transition="all 0.2s"
-          _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-        >
-          <CardBody>
-            <VStack align="start" spacing={2}>
-              <Text fontSize="sm" color="gray.600">Feature Requests</Text>
-              <Heading size="2xl" color="blue.500">{stats.totalFeatures}</Heading>
-              <Text fontSize="xs" color="gray.500">Collected • Click to view</Text>
-            </VStack>
-          </CardBody>
-        </Card>
-
-        <Card
-          as={RouterLink}
-          to="/objections"
-          cursor="pointer"
-          transition="all 0.2s"
-          _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-        >
-          <CardBody>
-            <VStack align="start" spacing={2}>
-              <Text fontSize="sm" color="gray.600">Objections</Text>
-              <Heading size="2xl" color="orange.500">{stats.totalObjections}</Heading>
-              <Text fontSize="xs" color="gray.500">Noted • Click to view</Text>
-            </VStack>
-          </CardBody>
-        </Card>
-      </SimpleGrid>
-
-      {/* Aggregate Summary */}
-      {aggregateSummary && (
+      {/* Empty State - Show when no calls */}
+      {calls.length === 0 ? (
         <Card mb={8}>
-          <CardHeader>
-            <Heading size="md">Insights Summary</Heading>
-            <Text fontSize="sm" color="gray.600" mt={1}>
-              Key findings across all {calls.length} calls
-            </Text>
-          </CardHeader>
           <CardBody>
-            <Grid templateColumns={{ base: '1fr', lg: 'repeat(3, 1fr)' }} gap={6}>
-              {/* Top Pain Points */}
-              <GridItem>
-                <VStack align="stretch" spacing={3} h="full">
-                  <HStack justify="space-between">
-                    <Heading size="sm" color="red.600">
-                      Top Pain Points
-                    </Heading>
-                    <Badge colorScheme="red">
-                      {aggregateSummary.highSeverityPainPoints} high severity
-                    </Badge>
-                  </HStack>
-                  <VStack spacing={2} align="stretch" flex={1}>
-                    {aggregateSummary.topPainPoints.map((pp, idx) => (
-                      <Box
-                        key={idx}
-                        p={3}
-                        bg="red.50"
-                        borderRadius="md"
-                        borderLeft="3px solid"
-                        borderColor="red.500"
-                      >
-                        <HStack mb={1}>
-                          <Badge colorScheme="red" size="sm">
-                            {pp.severity}
-                          </Badge>
-                        </HStack>
-                        <Text fontSize="sm" noOfLines={2}>
-                          {pp.text}
-                        </Text>
-                      </Box>
-                    ))}
-                  </VStack>
-                  <Button
-                    as={RouterLink}
-                    to="/pain-points"
-                    colorScheme="red"
-                    variant="outline"
-                    width="full"
-                  >
-                    View All Pain Points
-                  </Button>
-                </VStack>
-              </GridItem>
-
-              {/* Top Feature Requests */}
-              <GridItem>
-                <VStack align="stretch" spacing={3} h="full">
-                  <HStack justify="space-between">
-                    <Heading size="sm" color="blue.600">
-                      Top Feature Requests
-                    </Heading>
-                    <Badge colorScheme="blue">
-                      {aggregateSummary.highPriorityFeatures} high priority
-                    </Badge>
-                  </HStack>
-                  <VStack spacing={2} align="stretch" flex={1}>
-                    {aggregateSummary.topFeatures.map((feature, idx) => (
-                      <Box
-                        key={idx}
-                        p={3}
-                        bg="blue.50"
-                        borderRadius="md"
-                        borderLeft="3px solid"
-                        borderColor="blue.500"
-                      >
-                        <HStack mb={1}>
-                          <Badge colorScheme="blue" size="sm">
-                            {feature.priority}
-                          </Badge>
-                        </HStack>
-                        <Text fontSize="sm" noOfLines={2}>
-                          {feature.text}
-                        </Text>
-                      </Box>
-                    ))}
-                  </VStack>
-                  <Button
-                    as={RouterLink}
-                    to="/feature-requests"
-                    colorScheme="blue"
-                    variant="outline"
-                    width="full"
-                  >
-                    View All Features
-                  </Button>
-                </VStack>
-              </GridItem>
-
-              {/* Top Objections */}
-              <GridItem>
-                <VStack align="stretch" spacing={3} h="full">
-                  <Heading size="sm" color="orange.600">
-                    Common Objections
-                  </Heading>
-                  <VStack spacing={2} align="stretch" flex={1}>
-                    {aggregateSummary.topObjections.map((objection, idx) => (
-                      <Box
-                        key={idx}
-                        p={3}
-                        bg="orange.50"
-                        borderRadius="md"
-                        borderLeft="3px solid"
-                        borderColor="orange.500"
-                      >
-                        <Text fontSize="sm" noOfLines={2}>
-                          {objection.text}
-                        </Text>
-                      </Box>
-                    ))}
-                  </VStack>
-                  <Button
-                    as={RouterLink}
-                    to="/objections"
-                    colorScheme="orange"
-                    variant="outline"
-                    width="full"
-                  >
-                    View All Objections
-                  </Button>
-                </VStack>
-              </GridItem>
-            </Grid>
+            <VStack spacing={6} py={12}>
+              <Box fontSize="6xl">📞</Box>
+              <VStack spacing={2}>
+                <Heading size="lg">Welcome to Call Analysis Platform</Heading>
+                <Text color="gray.600" textAlign="center" maxW="md">
+                  Get started by analyzing your first customer discovery call. Upload a transcript to extract insights, pain points, and feature requests automatically.
+                </Text>
+              </VStack>
+              <VStack spacing={3} align="stretch" w="full" maxW="md">
+                <Button
+                  as={RouterLink}
+                  to="/upload"
+                  colorScheme="blue"
+                  size="lg"
+                  _hover={{ bg: 'blue.600', color: 'white' }}
+                >
+                  Upload Your First Call
+                </Button>
+                <Text fontSize="sm" color="gray.500" textAlign="center">
+                  💡 Tip: You can upload just a transcript, just notes, or both!
+                </Text>
+              </VStack>
+            </VStack>
           </CardBody>
         </Card>
-      )}
+      ) : (
+        <>
+          {/* Stats Cards */}
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6} mb={8}>
+            <Card>
+              <CardBody>
+                <VStack align="start" spacing={2}>
+                  <Text fontSize="sm" color="gray.600">Total Calls</Text>
+                  <Heading size="2xl">{stats.totalCalls}</Heading>
+                  <Text fontSize="xs" color="gray.500">Analyzed</Text>
+                </VStack>
+              </CardBody>
+            </Card>
 
-      {/* Recent Calls */}
-      <Card>
-        <CardHeader>
-          <Heading size="md">Recent Calls</Heading>
-        </CardHeader>
-        <CardBody>
-          {calls.length === 0 ? (
-            <VStack py={10} spacing={4}>
-              <Text color="gray.500" fontSize="lg">
-                No calls yet
-              </Text>
-              <Button as={RouterLink} to="/upload" colorScheme="blue">
-                Upload Your First Call
-              </Button>
-            </VStack>
-          ) : (
-            <VStack spacing={4} align="stretch">
-              {calls.slice(0, 10).map((call) => (
-                <CallCard key={call.callId} call={call} onDelete={() => handleDeleteCall(call.callId)} />
-              ))}
-            </VStack>
+            <Card
+              as={RouterLink}
+              to="/pain-points"
+              cursor="pointer"
+              transition="all 0.2s"
+              _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
+            >
+              <CardBody>
+                <VStack align="start" spacing={2}>
+                  <Text fontSize="sm" color="gray.600">Pain Points</Text>
+                  <Heading size="2xl" color="red.500">{stats.totalPainPoints}</Heading>
+                  <Text fontSize="xs" color="gray.500">Identified • Click to view</Text>
+                </VStack>
+              </CardBody>
+            </Card>
+
+            <Card
+              as={RouterLink}
+              to="/feature-requests"
+              cursor="pointer"
+              transition="all 0.2s"
+              _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
+            >
+              <CardBody>
+                <VStack align="start" spacing={2}>
+                  <Text fontSize="sm" color="gray.600">Feature Requests</Text>
+                  <Heading size="2xl" color="blue.500">{stats.totalFeatures}</Heading>
+                  <Text fontSize="xs" color="gray.500">Collected • Click to view</Text>
+                </VStack>
+              </CardBody>
+            </Card>
+
+            <Card
+              as={RouterLink}
+              to="/objections"
+              cursor="pointer"
+              transition="all 0.2s"
+              _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
+            >
+              <CardBody>
+                <VStack align="start" spacing={2}>
+                  <Text fontSize="sm" color="gray.600">Objections</Text>
+                  <Heading size="2xl" color="orange.500">{stats.totalObjections}</Heading>
+                  <Text fontSize="xs" color="gray.500">Noted • Click to view</Text>
+                </VStack>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
+
+          {/* Aggregate Summary */}
+          {aggregateSummary && (
+            <Card mb={8}>
+              <CardHeader>
+                <Heading size="md">Insights Summary</Heading>
+                <Text fontSize="sm" color="gray.600" mt={1}>
+                  Key findings across all {calls.length} calls
+                </Text>
+              </CardHeader>
+              <CardBody>
+                <Grid templateColumns={{ base: '1fr', lg: 'repeat(3, 1fr)' }} gap={6}>
+                  {/* Top Pain Points */}
+                  <GridItem>
+                    <VStack align="stretch" spacing={3} h="full">
+                      <HStack justify="space-between">
+                        <Heading size="sm" color="red.600">
+                          Top Pain Points
+                        </Heading>
+                        <Badge colorScheme="red">
+                          {aggregateSummary.highSeverityPainPoints} high severity
+                        </Badge>
+                      </HStack>
+                      <VStack spacing={2} align="stretch" flex={1}>
+                        {aggregateSummary.topPainPoints.map((pp, idx) => (
+                          <Box
+                            key={idx}
+                            p={3}
+                            bg="red.50"
+                            borderRadius="md"
+                            borderLeft="3px solid"
+                            borderColor="red.500"
+                          >
+                            <HStack mb={1}>
+                              <Badge colorScheme="red" size="sm">
+                                {pp.severity}
+                              </Badge>
+                            </HStack>
+                            <Text fontSize="sm" noOfLines={2}>
+                              {pp.text}
+                            </Text>
+                          </Box>
+                        ))}
+                      </VStack>
+                      <Button
+                        as={RouterLink}
+                        to="/pain-points"
+                        colorScheme="red"
+                        variant="outline"
+                        width="full"
+                      >
+                        View All Pain Points
+                      </Button>
+                    </VStack>
+                  </GridItem>
+
+                  {/* Top Feature Requests */}
+                  <GridItem>
+                    <VStack align="stretch" spacing={3} h="full">
+                      <HStack justify="space-between">
+                        <Heading size="sm" color="blue.600">
+                          Top Feature Requests
+                        </Heading>
+                        <Badge colorScheme="blue">
+                          {aggregateSummary.highPriorityFeatures} high priority
+                        </Badge>
+                      </HStack>
+                      <VStack spacing={2} align="stretch" flex={1}>
+                        {aggregateSummary.topFeatures.map((feature, idx) => (
+                          <Box
+                            key={idx}
+                            p={3}
+                            bg="blue.50"
+                            borderRadius="md"
+                            borderLeft="3px solid"
+                            borderColor="blue.500"
+                          >
+                            <HStack mb={1}>
+                              <Badge colorScheme="blue" size="sm">
+                                {feature.priority}
+                              </Badge>
+                            </HStack>
+                            <Text fontSize="sm" noOfLines={2}>
+                              {feature.text}
+                            </Text>
+                          </Box>
+                        ))}
+                      </VStack>
+                      <Button
+                        as={RouterLink}
+                        to="/feature-requests"
+                        colorScheme="blue"
+                        variant="outline"
+                        width="full"
+                      >
+                        View All Features
+                      </Button>
+                    </VStack>
+                  </GridItem>
+
+                  {/* Top Objections */}
+                  <GridItem>
+                    <VStack align="stretch" spacing={3} h="full">
+                      <Heading size="sm" color="orange.600">
+                        Common Objections
+                      </Heading>
+                      <VStack spacing={2} align="stretch" flex={1}>
+                        {aggregateSummary.topObjections.map((objection, idx) => (
+                          <Box
+                            key={idx}
+                            p={3}
+                            bg="orange.50"
+                            borderRadius="md"
+                            borderLeft="3px solid"
+                            borderColor="orange.500"
+                          >
+                            <Text fontSize="sm" noOfLines={2}>
+                              {objection.text}
+                            </Text>
+                          </Box>
+                        ))}
+                      </VStack>
+                      <Button
+                        as={RouterLink}
+                        to="/objections"
+                        colorScheme="orange"
+                        variant="outline"
+                        width="full"
+                      >
+                        View All Objections
+                      </Button>
+                    </VStack>
+                  </GridItem>
+                </Grid>
+              </CardBody>
+            </Card>
           )}
-        </CardBody>
-      </Card>
+
+          {/* Recent Calls */}
+          <Card>
+            <CardHeader>
+              <Heading size="md">Recent Calls</Heading>
+            </CardHeader>
+            <CardBody>
+              <VStack spacing={4} align="stretch">
+                {calls.slice(0, 10).map((call) => (
+                  <CallCard key={call.callId} call={call} onDelete={() => handleDeleteCall(call.callId)} />
+                ))}
+              </VStack>
+            </CardBody>
+          </Card>
+        </>
+      )}
     </Box>
   );
 }
