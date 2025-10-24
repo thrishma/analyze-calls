@@ -15,11 +15,11 @@
 
 **Full Platform Demo** - See the entire workflow from upload to insights:
 
-https://github.com/user-attachments/assets/call-analyzer-demo.mov
+https://github.com/thrishma/analyze-calls/raw/main/docs/images/Call%20Analyzer%20demo.mov
 
 **Chatbot Query Demo** - Watch how the AI chatbot answers questions across all calls:
 
-https://github.com/user-attachments/assets/call-analyser-chatbot-demo.mov
+https://github.com/user-attachments/assets/b60471c4-2b80-4f9c-8188-e08661cffb2f
 
 ### Screenshots
 
