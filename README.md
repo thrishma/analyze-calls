@@ -9,7 +9,49 @@
 
 **🚀 Quick Start:** [Installation Guide](#installation--setup) • **🤝 Contributing:** [Guidelines](./CONTRIBUTING.md) • **📖 Docs:** [Technical Details](./CLAUDE.md)
 
-[Screenshots will be added here]
+## Demo
+
+### Video Walkthroughs
+
+> **Note:** To view embedded videos on GitHub, the video files need to be uploaded via GitHub Issues. Download links are provided below.
+
+**Full Platform Demo** - See the entire workflow from upload to insights:
+
+[📥 Download Full Demo (28 MB)](docs/images/Call%20Analyzer%20demo.mov)
+
+**Chatbot Query Demo** - Watch how the AI chatbot answers questions across all calls:
+
+[📥 Download Chatbot Demo (6.7 MB)](docs/images/Call%20Analyser%20chatbot%20demo.mov)
+
+### Screenshots
+
+**Dashboard** - View call stats and recent analysis at a glance:
+
+![Dashboard](docs/images/Dashboard%20-%20Call%20analyzer.png)
+
+![Dashboard with multiple calls](docs/images/Dashboard%202%20-%20call%20analyzer.png)
+
+**Upload & Analyze Calls** - Simple interface for uploading transcripts and LinkedIn screenshots:
+
+![Start of analyze new call](docs/images/Start%20of%20analyze%20new%20call%20-%20call%20analyzer.png)
+
+![End of analyze new call](docs/images/End%20of%20analyze%20new%20call%20-%20call%20analyzer.png)
+
+**AI-Extracted Insights** - Comprehensive analysis with supporting quotes and confidence scores:
+
+![Pain point analysis](docs/images/Pain%20point%20analysis%20-%20call%20analyzer.png)
+
+![Feature requests](docs/images/Feature%20requests%20-%20call%20analyzer.png)
+
+![Objections and concerns](docs/images/Objections%20and%20concerns%20-%20call%20analyzer.png)
+
+**Detailed Call Analysis** - Deep dive into individual calls:
+
+![Call analysis 1](docs/images/Call%20analysis%201-%20call%20analyzer.png)
+
+![Call analysis 2](docs/images/Call%20analysis%202%20-%20call%20analyzer.png)
+
+![Call analysis 3](docs/images/Call%20analysis%203-%20call%20analyzer.png)
 
 ## Why This Exists
 
