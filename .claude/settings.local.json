@@ -24,7 +24,9 @@
       "Bash(git commit -m \"Use npm install with legacy-peer-deps for Amplify build\n\n- Change from npm ci to npm install --legacy-peer-deps\n- Resolves peer dependency conflict with React 19 and framer-motion\")",
       "Bash(git add frontend/index.html)",
       "Bash(git commit -m \"Update browser tab title to ''Call Analyzer''\")",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []
