@@ -216,10 +216,10 @@ function Home() {
       <HStack justify="space-between" mb={6}>
         <Heading>Dashboard</Heading>
         <HStack>
-          <Button as={RouterLink} to="/upload" colorScheme="blue" size="lg" _hover={{ bg: 'blue.600', color: 'white' }}>
+          <Button as={RouterLink} to={isDemoMode ? "/upload?demo=true" : "/upload"} colorScheme="blue" size="lg" _hover={{ bg: 'blue.600', color: 'white' }}>
             Analyze New Call
           </Button>
-          <Button as={RouterLink} to="/chatbot" variant="outline" colorScheme="blue" size="lg">
+          <Button as={RouterLink} to={isDemoMode ? "/chatbot?demo=true" : "/chatbot"} variant="outline" colorScheme="blue" size="lg">
             Ask Chatbot
           </Button>
         </HStack>

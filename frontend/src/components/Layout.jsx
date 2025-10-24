@@ -25,7 +25,7 @@ function Layout({ children }) {
             <HStack spacing={4}>
               <Button
                 as={RouterLink}
-                to="/"
+                to={isDemoMode ? "/?demo=true" : "/"}
                 variant="ghost"
                 color="white"
                 _hover={{ bg: 'blue.500', color: 'white' }}
@@ -34,7 +34,7 @@ function Layout({ children }) {
               </Button>
               <Button
                 as={RouterLink}
-                to="/upload"
+                to={isDemoMode ? "/upload?demo=true" : "/upload"}
                 variant="ghost"
                 color="white"
                 _hover={{ bg: 'blue.500', color: 'white' }}
@@ -43,7 +43,7 @@ function Layout({ children }) {
               </Button>
               <Button
                 as={RouterLink}
-                to="/chatbot"
+                to={isDemoMode ? "/chatbot?demo=true" : "/chatbot"}
                 variant="ghost"
                 color="white"
                 _hover={{ bg: 'blue.500', color: 'white' }}

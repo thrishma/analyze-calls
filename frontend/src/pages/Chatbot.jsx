@@ -17,6 +17,183 @@ import {
 } from '@chakra-ui/react';
 import { api } from '../api/client';
 import { useDemoMode } from '../hooks/useDemoMode';
+import { DEMO_CALLS } from '../data/demoData';
+
+/**
+ * Simulate chatbot response using demo data
+ * This function searches through demo calls and generates contextual responses
+ */
+async function simulateDemoResponse(query) {
+  // Simulate API delay for realism
+  await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+  const lowerQuery = query.toLowerCase();
+
+  // Collect relevant information from demo calls
+  let painPoints = [];
+  let featureRequests = [];
+  let objections = [];
+  let relevantCalls = [];
+
+  // Search through all demo calls for relevant information
+  DEMO_CALLS.forEach(call => {
+    let isRelevant = false;
+
+    // Check pain points
+    if (lowerQuery.includes('pain') || lowerQuery.includes('problem') || lowerQuery.includes('challenge') || lowerQuery.includes('issue')) {
+      call.analysis.painPoints.forEach(pp => {
+        if (matchesQuery(lowerQuery, pp.description) || matchesCategory(lowerQuery, pp.category)) {
+          painPoints.push({ ...pp, call });
+          isRelevant = true;
+        }
+      });
+    }
+
+    // Check feature requests
+    if (lowerQuery.includes('feature') || lowerQuery.includes('request') || lowerQuery.includes('want') || lowerQuery.includes('need')) {
+      call.analysis.featureRequests.forEach(fr => {
+        if (matchesQuery(lowerQuery, fr.feature) || matchesCategory(lowerQuery, fr.category)) {
+          featureRequests.push({ ...fr, call });
+          isRelevant = true;
+        }
+      });
+    }
+
+    // Check objections
+    if (lowerQuery.includes('objection') || lowerQuery.includes('concern') || lowerQuery.includes('worry') || lowerQuery.includes('risk')) {
+      call.analysis.objections.forEach(obj => {
+        if (matchesQuery(lowerQuery, obj.concern) || matchesCategory(lowerQuery, obj.category)) {
+          objections.push({ ...obj, call });
+          isRelevant = true;
+        }
+      });
+    }
+
+    // Keyword-based relevance for general queries
+    const callText = `${call.summary} ${call.transcript || ''}`.toLowerCase();
+    const queryWords = lowerQuery.split(/\s+/).filter(w => w.length > 3);
+    let matchScore = 0;
+    queryWords.forEach(word => {
+      if (callText.includes(word)) {
+        matchScore++;
+        isRelevant = true;
+      }
+    });
+
+    if (isRelevant) {
+      relevantCalls.push({ call, matchScore });
+    }
+  });
+
+  // Generate answer based on what was found
+  let answer = '';
+  const sources = [];
+
+  if (painPoints.length > 0) {
+    answer += generatePainPointsAnswer(painPoints, lowerQuery);
+    painPoints.slice(0, 5).forEach(pp => addSource(sources, pp.call));
+  }
+
+  if (featureRequests.length > 0) {
+    if (answer) answer += '\n\n';
+    answer += generateFeatureRequestsAnswer(featureRequests, lowerQuery);
+    featureRequests.slice(0, 5).forEach(fr => addSource(sources, fr.call));
+  }
+
+  if (objections.length > 0) {
+    if (answer) answer += '\n\n';
+    answer += generateObjectionsAnswer(objections, lowerQuery);
+    objections.slice(0, 5).forEach(obj => addSource(sources, obj.call));
+  }
+
+  // If no specific matches, provide a general summary
+  if (!answer && relevantCalls.length > 0) {
+    relevantCalls.sort((a, b) => b.matchScore - a.matchScore);
+    const topCalls = relevantCalls.slice(0, 3);
+    answer = `Based on the customer calls, here's what I found:\n\n`;
+    topCalls.forEach((rc, i) => {
+      answer += `**${i + 1}. ${rc.call.metadata.participantName} (${rc.call.metadata.company})**\n${rc.call.summary}\n\n`;
+      addSource(sources, rc.call);
+    });
+  }
+
+  // Fallback if nothing relevant found
+  if (!answer) {
+    answer = "I couldn't find specific information related to your question in the demo calls. Try asking about pain points, feature requests, objections, or specific topics like checkout, inventory, mobile, or international sales.";
+  }
+
+  return {
+    answer,
+    sources: sources.slice(0, 5) // Limit to top 5 sources
+  };
+}
+
+function matchesQuery(query, text) {
+  const queryWords = query.split(/\s+/).filter(w => w.length > 3);
+  const lowerText = text.toLowerCase();
+  return queryWords.some(word => lowerText.includes(word));
+}
+
+function matchesCategory(query, category) {
+  return query.includes(category.toLowerCase());
+}
+
+function addSource(sources, call) {
+  // Avoid duplicate sources
+  if (!sources.find(s => s.callId === call.callId)) {
+    sources.push({
+      callId: call.callId,
+      participantName: call.metadata.participantName,
+      company: call.metadata.company,
+      callDate: call.metadata.callDate
+    });
+  }
+}
+
+function generatePainPointsAnswer(painPoints, query) {
+  const highSeverity = painPoints.filter(pp => pp.severity === 'high');
+  const sortedPainPoints = [...highSeverity, ...painPoints.filter(pp => pp.severity !== 'high')].slice(0, 5);
+
+  let answer = `**Pain Points & Challenges:**\n\n`;
+  sortedPainPoints.forEach((pp, i) => {
+    answer += `${i + 1}. **${pp.description}** (${pp.severity} severity)\n`;
+    if (pp.quote) {
+      answer += `   "${pp.quote}" - ${pp.call.metadata.participantName}, ${pp.call.metadata.company}\n\n`;
+    }
+  });
+
+  return answer;
+}
+
+function generateFeatureRequestsAnswer(featureRequests, query) {
+  const highPriority = featureRequests.filter(fr => fr.priority === 'high');
+  const sortedFeatures = [...highPriority, ...featureRequests.filter(fr => fr.priority !== 'high')].slice(0, 5);
+
+  let answer = `**Feature Requests:**\n\n`;
+  sortedFeatures.forEach((fr, i) => {
+    answer += `${i + 1}. **${fr.feature}** (${fr.priority} priority)\n`;
+    if (fr.quote) {
+      answer += `   "${fr.quote}" - ${fr.call.metadata.participantName}, ${fr.call.metadata.company}\n\n`;
+    }
+  });
+
+  return answer;
+}
+
+function generateObjectionsAnswer(objections, query) {
+  const highSeverity = objections.filter(obj => obj.severity === 'high');
+  const sortedObjections = [...highSeverity, ...objections.filter(obj => obj.severity !== 'high')].slice(0, 5);
+
+  let answer = `**Objections & Concerns:**\n\n`;
+  sortedObjections.forEach((obj, i) => {
+    answer += `${i + 1}. **${obj.concern}** (${obj.severity} severity)\n`;
+    if (obj.quote) {
+      answer += `   "${obj.quote}" - ${obj.call.metadata.participantName}, ${obj.call.metadata.company}\n\n`;
+    }
+  });
+
+  return answer;
+}
 
 function Chatbot() {
   const [messages, setMessages] = useState([]);
@@ -81,7 +258,14 @@ function Chatbot() {
     setIsQueryInProgress(true);
 
     try {
-      const response = await api.queryChatbot(queryText);
+      let response;
+
+      // In demo mode, simulate chatbot responses using demo data
+      if (isDemoMode) {
+        response = await simulateDemoResponse(queryText);
+      } else {
+        response = await api.queryChatbot(queryText);
+      }
 
       // Add assistant message
       const assistantMessage = {
