@@ -20,18 +20,78 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  Link,
 } from '@chakra-ui/react';
+import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { api } from '../api/client';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 function CallDetail() {
   const { callId } = useParams();
   const [callData, setCallData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isDemoMode, getDemoCall } = useDemoMode();
 
   useEffect(() => {
-    loadCallData();
-  }, [callId]);
+    // Check if this is a demo call ID (starts with 'demo-')
+    const isDemoCallId = callId && callId.startsWith('demo-');
+
+    if (isDemoMode || isDemoCallId) {
+      // Load demo data
+      const demoCall = getDemoCall(callId);
+      if (demoCall) {
+        // Format demo data to match expected structure
+        setCallData({
+          callId: demoCall.callId,
+          participantName: demoCall.metadata.participantName,
+          company: demoCall.metadata.company,
+          callDate: demoCall.metadata.callDate,
+          linkedinProfileUrl: demoCall.metadata.linkedinProfileUrl,
+          notes: demoCall.metadata.notes,
+          linkedinProfile: demoCall.linkedinProfile,
+          summary: demoCall.summary,
+          transcript: demoCall.transcript,
+          insights: {
+            painPoints: demoCall.analysis.painPoints.map(pp => ({
+              ...pp,
+              text: pp.description, // Map description to text for UI
+              severity: pp.severity,
+              quote: pp.quote,
+              confidence: pp.confidence,
+              category: pp.category
+            })),
+            featureRequests: demoCall.analysis.featureRequests.map(fr => ({
+              ...fr,
+              text: fr.feature || fr.description, // Map feature to text for UI
+              priority: fr.priority,
+              quote: fr.quote,
+              confidence: fr.confidence,
+              category: fr.category
+            })),
+            objections: demoCall.analysis.objections.map(obj => ({
+              ...obj,
+              text: obj.concern, // Map concern to text for UI
+              severity: obj.severity,
+              quote: obj.quote,
+              confidence: obj.confidence,
+              category: obj.category
+            }))
+          }
+        });
+        setIsLoading(false);
+      } else if (isDemoCallId) {
+        // It's a demo call ID but not found in demo data
+        setError('Demo call not found');
+        setIsLoading(false);
+      } else {
+        // Try loading from API
+        loadCallData();
+      }
+    } else {
+      loadCallData();
+    }
+  }, [callId, isDemoMode]);
 
   const loadCallData = async () => {
     try {
@@ -248,7 +308,19 @@ function CallDetail() {
             {callData.linkedInProfile && !callData.linkedInProfile.error && (
               <Card>
                 <CardHeader>
-                  <Heading size="md">LinkedIn Profile</Heading>
+                  <HStack justify="space-between" align="center">
+                    <Heading size="md">LinkedIn Profile</Heading>
+                    {callData.linkedinProfileUrl && (
+                      <Link
+                        href={callData.linkedinProfileUrl}
+                        isExternal
+                        color="blue.500"
+                        fontSize="sm"
+                      >
+                        View Profile <ExternalLinkIcon mx="2px" />
+                      </Link>
+                    )}
+                  </HStack>
                 </CardHeader>
                 <CardBody>
                   <VStack align="stretch" spacing={3}>

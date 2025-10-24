@@ -16,12 +16,14 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { api } from '../api/client';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 function Chatbot() {
   const [messages, setMessages] = useState([]);
   const [currentQuery, setCurrentQuery] = useState('');
   const [isQueryInProgress, setIsQueryInProgress] = useState(false);
   const messagesEndRef = useRef(null);
+  const { isDemoMode, demoChatHistory } = useDemoMode();
 
   const suggestedQueries = [
     "What are the most common pain points mentioned?",
@@ -37,6 +39,28 @@ function Chatbot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load demo chat history in demo mode
+  useEffect(() => {
+    if (isDemoMode && demoChatHistory.length > 0 && messages.length === 0) {
+      const demoMessages = demoChatHistory.flatMap(chat => [
+        {
+          id: `${chat.id}-user`,
+          role: 'user',
+          content: chat.query,
+          timestamp: chat.timestamp,
+        },
+        {
+          id: `${chat.id}-assistant`,
+          role: 'assistant',
+          content: chat.answer,
+          sources: chat.sources || [],
+          timestamp: chat.timestamp,
+        }
+      ]);
+      setMessages(demoMessages);
+    }
+  }, [isDemoMode, demoChatHistory]);
 
   const handleSubmit = async (e, query = null) => {
     if (e) e.preventDefault();

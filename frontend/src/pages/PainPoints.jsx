@@ -27,6 +27,7 @@ import {
   Tag,
 } from '@chakra-ui/react';
 import { api } from '../api/client';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 function PainPoints() {
   const [calls, setCalls] = useState([]);
@@ -34,20 +35,44 @@ function PainPoints() {
   const [patterns, setPatterns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isDemoMode, demoCalls } = useDemoMode();
 
   useEffect(() => {
     loadPainPoints();
-  }, []);
+  }, [isDemoMode]);
 
   const loadPainPoints = async () => {
     try {
       setIsLoading(true);
-      const data = await api.getCalls();
-      setCalls(data.calls || []);
+
+      let callsData = [];
+      if (isDemoMode) {
+        // Use demo data - format it to match API response
+        callsData = demoCalls.map(call => ({
+          callId: call.callId,
+          participantName: call.metadata.participantName,
+          company: call.metadata.company,
+          callDate: call.metadata.callDate,
+          insights: {
+            painPoints: call.analysis.painPoints.map(pp => ({
+              text: pp.description,
+              severity: pp.severity,
+              quote: pp.quote,
+              confidence: pp.confidence,
+              category: pp.category
+            }))
+          }
+        }));
+      } else {
+        const data = await api.getCalls();
+        callsData = data.calls || [];
+      }
+
+      setCalls(callsData);
 
       // Extract all pain points from all calls
       const allPainPoints = [];
-      (data.calls || []).forEach(call => {
+      callsData.forEach(call => {
         if (call.insights?.painPoints) {
           call.insights.painPoints.forEach(painPoint => {
             allPainPoints.push({
@@ -265,7 +290,7 @@ function PainPoints() {
                                 </Text>
                                 <Link
                                   as={RouterLink}
-                                  to={`/calls/${pp.callId}`}
+                                  to={isDemoMode ? `/calls/${pp.callId}?demo=true` : `/calls/${pp.callId}`}
                                   color="blue.500"
                                   fontSize="xs"
                                 >

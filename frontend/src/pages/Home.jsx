@@ -29,16 +29,50 @@ import {
 } from '@chakra-ui/react';
 import { api } from '../api/client';
 import { DeleteIcon } from '@chakra-ui/icons';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 function Home() {
   const [calls, setCalls] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const toast = useToast();
+  const { isDemoMode, demoCalls } = useDemoMode();
 
   useEffect(() => {
-    loadCalls();
-  }, []);
+    if (isDemoMode) {
+      // Use demo data instead of API call
+      const formattedDemoCalls = demoCalls.map(call => ({
+        callId: call.callId,
+        participantName: call.metadata.participantName,
+        company: call.metadata.company,
+        callDate: call.metadata.callDate,
+        summary: call.summary,
+        insightsCount: {
+          painPoints: call.analysis.painPoints.length,
+          featureRequests: call.analysis.featureRequests.length,
+          objections: call.analysis.objections.length
+        },
+        insights: {
+          painPoints: call.analysis.painPoints.map(pp => ({
+            ...pp,
+            text: pp.description // Map description to text for UI compatibility
+          })),
+          featureRequests: call.analysis.featureRequests.map(fr => ({
+            ...fr,
+            text: fr.feature || fr.description // Map feature to text for UI compatibility
+          })),
+          objections: call.analysis.objections.map(obj => ({
+            ...obj,
+            text: obj.concern // Map concern to text for UI compatibility
+          }))
+        }
+      }));
+      setCalls(formattedDemoCalls);
+      setIsLoading(false);
+    } else {
+      loadCalls();
+    }
+  }, [isDemoMode]);
 
   const loadCalls = async () => {
     try {
@@ -55,6 +89,18 @@ function Home() {
   };
 
   const handleDeleteCall = async (callId) => {
+    // Prevent deletion in demo mode
+    if (isDemoMode) {
+      toast({
+        title: 'Demo Mode',
+        description: 'Cannot delete calls in demo mode',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
     try {
       await api.deleteCall(callId);
       toast({
@@ -316,7 +362,7 @@ function Home() {
                       </VStack>
                       <Button
                         as={RouterLink}
-                        to="/pain-points"
+                        to={isDemoMode ? "/pain-points?demo=true" : "/pain-points"}
                         colorScheme="red"
                         variant="outline"
                         width="full"
@@ -360,7 +406,7 @@ function Home() {
                       </VStack>
                       <Button
                         as={RouterLink}
-                        to="/feature-requests"
+                        to={isDemoMode ? "/feature-requests?demo=true" : "/feature-requests"}
                         colorScheme="blue"
                         variant="outline"
                         width="full"
@@ -394,7 +440,7 @@ function Home() {
                       </VStack>
                       <Button
                         as={RouterLink}
-                        to="/objections"
+                        to={isDemoMode ? "/objections?demo=true" : "/objections"}
                         colorScheme="orange"
                         variant="outline"
                         width="full"
@@ -430,6 +476,7 @@ function Home() {
 function CallCard({ call, onDelete }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useState(null);
+  const { isDemoMode } = useDemoMode();
 
   const handleDeleteClick = (e) => {
     e.preventDefault(); // Prevent navigation
@@ -440,6 +487,9 @@ function CallCard({ call, onDelete }) {
     onDelete();
     onClose();
   };
+
+  // Preserve demo mode in URL
+  const callUrl = isDemoMode ? `/calls/${call.callId}?demo=true` : `/calls/${call.callId}`;
 
   return (
     <>
@@ -452,7 +502,7 @@ function CallCard({ call, onDelete }) {
         transition="all 0.2s"
         position="relative"
       >
-        <Link as={RouterLink} to={`/calls/${call.callId}`} _hover={{ textDecoration: 'none' }}>
+        <Link as={RouterLink} to={callUrl} _hover={{ textDecoration: 'none' }}>
           <Grid templateColumns={{ base: '1fr', md: '2fr 1fr' }} gap={4}>
             <GridItem>
               <VStack align="start" spacing={2}>

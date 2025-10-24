@@ -26,6 +26,7 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { api } from '../api/client';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 function Objections() {
   const [calls, setCalls] = useState([]);
@@ -33,20 +34,44 @@ function Objections() {
   const [patterns, setPatterns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isDemoMode, demoCalls } = useDemoMode();
 
   useEffect(() => {
     loadObjections();
-  }, []);
+  }, [isDemoMode]);
 
   const loadObjections = async () => {
     try {
       setIsLoading(true);
-      const data = await api.getCalls();
-      setCalls(data.calls || []);
+
+      let callsData = [];
+      if (isDemoMode) {
+        // Use demo data - format it to match API response
+        callsData = demoCalls.map(call => ({
+          callId: call.callId,
+          participantName: call.metadata.participantName,
+          company: call.metadata.company,
+          callDate: call.metadata.callDate,
+          insights: {
+            objections: call.analysis.objections.map(obj => ({
+              text: obj.concern,
+              severity: obj.severity,
+              quote: obj.quote,
+              confidence: obj.confidence,
+              category: obj.category
+            }))
+          }
+        }));
+      } else {
+        const data = await api.getCalls();
+        callsData = data.calls || [];
+      }
+
+      setCalls(callsData);
 
       // Extract all objections from all calls
       const allObjections = [];
-      (data.calls || []).forEach(call => {
+      callsData.forEach(call => {
         if (call.insights?.objections) {
           call.insights.objections.forEach(objection => {
             allObjections.push({
@@ -246,7 +271,7 @@ function Objections() {
                                 </Text>
                                 <Link
                                   as={RouterLink}
-                                  to={`/calls/${objection.callId}`}
+                                  to={isDemoMode ? `/calls/${objection.callId}?demo=true` : `/calls/${objection.callId}`}
                                   color="blue.500"
                                   fontSize="xs"
                                 >

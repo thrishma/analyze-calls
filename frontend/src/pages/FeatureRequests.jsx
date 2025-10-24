@@ -26,6 +26,7 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { api } from '../api/client';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 function FeatureRequests() {
   const [calls, setCalls] = useState([]);
@@ -33,20 +34,44 @@ function FeatureRequests() {
   const [patterns, setPatterns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isDemoMode, demoCalls } = useDemoMode();
 
   useEffect(() => {
     loadFeatures();
-  }, []);
+  }, [isDemoMode]);
 
   const loadFeatures = async () => {
     try {
       setIsLoading(true);
-      const data = await api.getCalls();
-      setCalls(data.calls || []);
+
+      let callsData = [];
+      if (isDemoMode) {
+        // Use demo data - format it to match API response
+        callsData = demoCalls.map(call => ({
+          callId: call.callId,
+          participantName: call.metadata.participantName,
+          company: call.metadata.company,
+          callDate: call.metadata.callDate,
+          insights: {
+            featureRequests: call.analysis.featureRequests.map(fr => ({
+              text: fr.feature || fr.description,
+              priority: fr.priority,
+              quote: fr.quote,
+              confidence: fr.confidence,
+              category: fr.category
+            }))
+          }
+        }));
+      } else {
+        const data = await api.getCalls();
+        callsData = data.calls || [];
+      }
+
+      setCalls(callsData);
 
       // Extract all feature requests from all calls
       const allFeatures = [];
-      (data.calls || []).forEach(call => {
+      callsData.forEach(call => {
         if (call.insights?.featureRequests) {
           call.insights.featureRequests.forEach(feature => {
             allFeatures.push({
@@ -264,7 +289,7 @@ function FeatureRequests() {
                                 </Text>
                                 <Link
                                   as={RouterLink}
-                                  to={`/calls/${feature.callId}`}
+                                  to={isDemoMode ? `/calls/${feature.callId}?demo=true` : `/calls/${feature.callId}`}
                                   color="blue.500"
                                   fontSize="xs"
                                 >

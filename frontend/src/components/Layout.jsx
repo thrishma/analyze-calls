@@ -1,17 +1,27 @@
-import { Box, Container, Flex, Heading, Button, HStack, Text, Link, Icon } from '@chakra-ui/react';
+import { Box, Container, Flex, Heading, Button, HStack, Text, Link, Icon, Badge } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 function Layout({ children }) {
+  const { isDemoMode } = useDemoMode();
+
   return (
     <Box minH="100vh" display="flex" flexDirection="column">
       {/* Navigation Bar */}
       <Box bg="blue.600" color="white" py={4} px={6} shadow="md">
         <Container maxW="full" px={8}>
           <Flex justify="space-between" align="center">
-            <Heading as={RouterLink} to="/" size="md" cursor="pointer" _hover={{ color: 'white', textDecoration: 'none' }}>
-              📞 Call Analyzer
-            </Heading>
+            <HStack spacing={3}>
+              <Heading as={RouterLink} to="/" size="md" cursor="pointer" _hover={{ color: 'white', textDecoration: 'none' }}>
+                📞 Call Analyzer
+              </Heading>
+              {isDemoMode && (
+                <Badge colorScheme="yellow" fontSize="xs" px={2} py={1}>
+                  🎬 DEMO MODE
+                </Badge>
+              )}
+            </HStack>
             <HStack spacing={4}>
               <Button
                 as={RouterLink}
