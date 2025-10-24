@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  frontend-lint-and-build:
+    name: Frontend - Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run linter
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Check build artifacts
+        working-directory: frontend
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Build failed - dist directory not created"
+            exit 1
+          fi
+          echo "✅ Build successful - dist directory created"
+
+  backend-validate:
+    name: Backend - Validate SAM Template
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Validate SAM template
+        working-directory: backend
+        run: sam validate --lint
+
+      - name: Install Lambda dependencies - processCall
+        working-directory: backend/lambda/processCall
+        run: npm ci
+
+      - name: Install Lambda dependencies - chatbotQuery
+        working-directory: backend/lambda/chatbotQuery
+        run: npm ci
+
+      - name: Install Lambda dependencies - getCalls
+        working-directory: backend/lambda/getCalls
+        run: npm ci
+
+      - name: Install Lambda dependencies - deleteCall
+        working-directory: backend/lambda/deleteCall
+        run: npm ci
+
+      - name: SAM Build
+        working-directory: backend
+        run: sam build
+
+      - name: Check SAM build artifacts
+        working-directory: backend
+        run: |
+          if [ ! -d ".aws-sam/build" ]; then
+            echo "SAM build failed"
+            exit 1
+          fi
+          echo "✅ SAM build successful"
+
+  markdown-lint:
+    name: Documentation - Lint Markdown
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            README.md
+            CONTRIBUTING.md
+            SECURITY.md
+            CLAUDE.md
+            CODE_OF_CONDUCT.md
+          config: .markdownlint.json
+        continue-on-error: true  # Don't fail the build on markdown lint errors
+
+  check-secrets:
+    name: Security - Check for Secrets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run secret scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+        continue-on-error: true  # Don't fail build, just warn

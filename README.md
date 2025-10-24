@@ -2,6 +2,7 @@
 
 > **Self-hosted AI-powered platform** for analyzing customer discovery calls to extract pain points, feature requests, and objections. Built with React, AWS Lambda, and OpenAI GPT-4.
 
+[![CI](https://github.com/thrishma/analyze-calls/actions/workflows/ci.yml/badge.svg)](https://github.com/thrishma/analyze-calls/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub issues](https://img.shields.io/github/issues/thrishma/analyze-calls)](https://github.com/thrishma/analyze-calls/issues)
 [![GitHub stars](https://img.shields.io/github/stars/thrishma/analyze-calls)](https://github.com/thrishma/analyze-calls/stargazers)
@@ -640,6 +641,28 @@ Update frontend `.env` to point to `http://localhost:3001`
 ### Testing
 
 See [CLAUDE.md](./CLAUDE.md) for detailed testing instructions and development workflows.
+
+### Continuous Integration
+
+This project uses GitHub Actions for CI/CD. On every push and pull request to `main`:
+
+✅ **Frontend checks:**
+- Linting with ESLint
+- Build verification
+- Artifact validation
+
+✅ **Backend checks:**
+- SAM template validation
+- Lambda dependency installation
+- SAM build verification
+
+✅ **Documentation checks:**
+- Markdown linting (warnings only)
+
+✅ **Security checks:**
+- Secret scanning with TruffleHog
+
+**Status:** Check the badge at the top of this README for current build status.
 
 ## Roadmap
 
